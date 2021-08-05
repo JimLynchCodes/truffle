@@ -1,13 +1,14 @@
 const assert = require("assert");
 const sinon = require("sinon");
 const axios = require("axios");
-const CompilerSupplier = require("../../compilerSupplier");
+const { CompilerSupplier } = require("../../dist/compilerSupplier");
+const { Cache } = require("../../dist/compilerSupplier/Cache");
 const {
   Docker,
   Native,
   Local,
   VersionRange
-} = require("../../compilerSupplier/loadingStrategies");
+} = require("../../dist/compilerSupplier/loadingStrategies");
 const Config = require("@truffle/config");
 const config = new Config();
 let supplier;
@@ -136,11 +137,11 @@ describe("CompilerSupplier", () => {
 
     describe("when a user specifies the compiler url root", () => {
       beforeEach(() => {
+        sinon.stub(Cache.prototype, "addFileToCache");
+        sinon.stub(Cache.prototype, "fileIsCached").returns(false);
         sinon.stub(VersionRange.prototype, "getSolcVersions")
           .returns(allVersions);
-        sinon.stub(VersionRange.prototype, "addFileToCache");
         sinon.stub(VersionRange.prototype, "versionIsCached").returns(false);
-        sinon.stub(VersionRange.prototype, "fileIsCached").returns(false);
         sinon.stub(VersionRange.prototype, "compilerFromString");
         sinon.stub(axios, "get")
           .withArgs(
@@ -149,10 +150,10 @@ describe("CompilerSupplier", () => {
           .returns({ data: "response" });
       });
       afterEach(() => {
+        Cache.prototype.addFileToCache.restore();
+        Cache.prototype.fileIsCached.restore();
         VersionRange.prototype.getSolcVersions.restore();
-        VersionRange.prototype.addFileToCache.restore();
         VersionRange.prototype.versionIsCached.restore();
-        VersionRange.prototype.fileIsCached.restore();
         VersionRange.prototype.compilerFromString.restore();
         axios.get.restore();
       });
